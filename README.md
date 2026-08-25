@@ -8,6 +8,10 @@
 [![EMNLP 2026](https://img.shields.io/badge/EMNLP-2026-ff6f00?style=for-the-badge)](https://arxiv.org/abs/2608.23311)
 </div>
 
+<p align="center">
+  English | <a href="README_CN.md">简体中文</a>
+</p>
+
 > [!IMPORTANT]
 > **🔥 News**
 > - [2026/08] ERPO is accepted to **EMNLP 2026 main conference**.
@@ -111,17 +115,6 @@ python examples/start_rlvr_pipeline.py \
 python examples/start_rlvr_pipeline.py \
   --config_path examples/erpo \
   --config_name grpo_base_qwen25_7b
-```
-
-Cluster/AI Hub submission scripts (`submit_pipeline.sh` / `submit_pipeline_amd.sh`) are internal infrastructure and remain in the main ROLL repository under `examples/erpo/`.
-
-Resume a failed run:
-
-```bash
-BASE_NAME=<new-job-name> \
-OSS_RUN_BASE=oss://your-bucket/erpo/runs/<source-run> \
-RESUME_FROM_CHECKPOINT=oss://your-bucket/erpo/runs/<source-run>/ckpt/checkpoint-<step> \
-bash examples/erpo/submit_pipeline.sh
 ```
 
 ## ERPO vs GRPO: Configuration Switch
