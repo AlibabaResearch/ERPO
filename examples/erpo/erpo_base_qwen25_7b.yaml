@@ -1,0 +1,243 @@
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+# Keep the AI Hub job name and SwanLab experiment name aligned. The fallback
+# keeps direct local launches working when RUN_NAME is not set.
+exp_name: ${oc.env:RUN_NAME,roll_erpo_base_online_qwen25_7b}
+seed: 1
+logging_dir: ./output/logs
+output_dir: ./output
+system_envs:
+  USE_MODELSCOPE: "0"
+  NVTE_TORCH_COMPILE: "0"
+
+# Qwen2.5-7B base model (HF format) read from OSS via the AI Hub FUSE mount.
+# local-cache:// copies it to each node's local cache on first use.
+pretrain: Qwen/Qwen2.5-7B
+reward_pretrain: ${pretrain}
+
+checkpoint_config:
+  # Upload checkpoints to durable OSS on a background thread so the training
+  # loop is not blocked; the final checkpoint still uploads synchronously.
+  type: oss
+  output_dir: ${oc.env:OSS_RUN_BASE,./output}/ckpt
+  async_upload: true
+  fail_on_upload_error: true
+  upload_num_threads: 2
+  upload_max_retries: 3
+  upload_retry_backoff_seconds: 10
+
+track_with: swanlab
+tracker_kwargs:
+  login_kwargs:
+    api_key: ${oc.env:SWANLAB_API_KEY}
+  project: erpo
+  logdir: ${oc.env:SWANLAB_LOGDIR,./output/swanlog}
+  experiment_name: ${exp_name}
+  description: "ROLL ERPO reproduction with Qwen2.5-7B base, TP1, 8K responses, online RL"
+  tags: [roll, erpo, qwen2.5, 8k, base, online]
+
+num_gpus_per_node: 8
+rpc_timeout: 72000
+
+# Online RL shape: 128 prompts x 8 responses = 1024 responses per rollout =
+# exactly one optimizer step (1024 / 1024 = 1 update per rollout).
+# Total samples: 960 steps x 1024 = 983040, matching the offline 240 x 4096.
+max_steps: 960
+save_steps: 20
+max_ckpt_to_keep: 30
+eval_steps: 10
+logging_steps: 1
+# Keep fresh training as the default while allowing an AI Hub resubmission to
+# point at a checkpoint mounted from a previous task.
+resume_from_checkpoint: ${oc.env:RESUME_FROM_CHECKPOINT,false}
+
+# Online RL rollout shape: 128 prompts x 8 responses.
+rollout_batch_size: 128
+val_batch_size: 1024
+num_return_sequences_in_group: 8
+is_num_return_sequences_expand: true
+prompt_length: 1024
+# Keep the requested 8K response budget while retaining ERPO's prompt limit.
+response_length: 8192
+sequence_length: 9216
+
+ppo_epochs: 1
+adv_estimator: grpo
+norm_mean_type: group
+norm_std_type: group
+whiten_advantages: false
+init_kl_coef: 0.0
+add_token_level_kl: false
+
+# Core ERPO behavior.
+difficulty_loss_weight: false
+length_loss_weight: false
+# Compute prompt NLLs with the current actor before every optimizer update and
+# normalize over the actual 1024-response global batch. Existing response-level
+# shuffle and sequence packing remain unchanged.
+dynamic_prompt_logp_loss_weight: true
+use_kl_loss: true
+kl_loss_coef: 1.0e-2
+kl_loss_mask_mode: prompt
+importance_sampling: token
+loss_agg_mode: seq-mean-token-mean
+dual_clip_loss: true
+
+# The requested reproduction intentionally omits dynamic filtering details.
+max_len_mask: false
+difficulty_mask: false
+
+validation:
+  data_args:
+    template: native
+    file_name:
+      - data/erpo/eval/math.jsonl
+      - data/erpo/eval/aime_2024_avg4.jsonl
+      - data/erpo/eval/aime_2025_avg4.jsonl
+      - data/erpo/eval/amc.jsonl
+    dataset_dir: ./
+    messages: messages
+    preprocessing_num_workers: 16
+  generating_args:
+    max_new_tokens: ${response_length}
+    top_p: 0.95
+    top_k: -1
+    num_beams: 1
+    temperature: 1.0
+    num_return_sequences: 1
+
+actor_train:
+  model_args:
+    flash_attn: sdpa
+    attn_implementation: sdpa
+    disable_gradient_checkpointing: false
+    dtype: bf16
+    model_type: null
+    freeze_module_prefix: vision_model
+  training_args:
+    learning_rate: 1.0e-6
+    weight_decay: 1.0e-2
+    # ERPO: actor.ppo_micro_batch_size_per_gpu=1.
+    per_device_train_batch_size: 1
+    # Online RL: one 1024-response optimizer step per 128-prompt rollout.
+    # TP1 on 16 GPUs gives DP16; DP16 x micro-batch1 x GA64 = 1024 responses.
+    gradient_accumulation_steps: 64
+    warmup_steps: 0
+    num_train_epochs: 15
+  data_args:
+    template: native
+    file_name:
+      - data/erpo/train/math_lvl3to5_8k.jsonl
+    domain_interleave_probs:
+      math: 1.0
+    dataset_dir: ./
+    messages: messages
+    preprocessing_num_workers: 16
+  strategy_args:
+    strategy_name: megatron_train
+    strategy_config:
+      sequence_parallel: false
+      tensor_model_parallel_size: 1
+      pipeline_model_parallel_size: 1
+      context_parallel_size: 1
+      expert_model_parallel_size: 1
+      use_distributed_optimizer: true
+      bias_activation_fusion: true
+      apply_rope_fusion: true
+      bf16: true
+      mtp_num_layers: 0
+  device_mapping: list(range(0,16))
+  # ERPO: actor.log_prob_micro_batch_size_per_gpu=4.
+  infer_batch_size: 4
+  # ROLL pads rollout tensors to sequence_length (9216). Without packing, a
+  # ~750-token sample still executes as 9216 tokens in actor forward/backward.
+  # Packing removes that padding inside the single 1024-response optimizer
+  # batch per rollout.
+  use_sequence_packing: true
+  sequence_packing_args:
+    algorithm: load_balance
+    # Keep the packed micro-batch ceiling at the existing dense-sequence peak to
+    # avoid increasing memory while allowing every valid 8K response to fit.
+    max_packed_sequence_length_train: ${sequence_length}
+    max_packed_sequence_length_forward: ${sequence_length}
+    min_num_micro_batches_train: 1
+    min_num_micro_batches_forward: 1
+
+actor_infer:
+  model_args:
+    flash_attn: fa2
+    attn_implementation: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+  generating_args:
+    max_new_tokens: ${response_length}
+    top_p: 1.0
+    top_k: -1
+    num_beams: 1
+    temperature: 1.0
+    num_return_sequences: ${num_return_sequences_in_group}
+  data_args:
+    template: native
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      gpu_memory_utilization: 0.7
+      max_model_len: ${sequence_length}
+      load_format: dummy
+      tensor_parallel_size: 1
+      pipeline_parallel_size: 1
+      block_size: 16
+      # Level 2 avoids the ROCm level-1 cumem CPU-to-GPU restore path. The full
+      # actor weights are reloaded by the online Megatron-to-vLLM model update.
+      sleep_level: 2
+  num_gpus_per_worker: 1
+  device_mapping: list(range(0,16))
+  infer_batch_size: 1
+
+reference:
+  model_args:
+    flash_attn: sdpa
+    attn_implementation: sdpa
+    disable_gradient_checkpointing: true
+    dtype: bf16
+    model_type: null
+    freeze_module_prefix: vision_model
+  data_args:
+    template: native
+  strategy_args:
+    strategy_name: megatron_infer
+    strategy_config:
+      sequence_parallel: false
+      tensor_model_parallel_size: 1
+      pipeline_model_parallel_size: 1
+      context_parallel_size: 1
+      expert_model_parallel_size: 1
+      bf16: true
+      mtp_num_layers: 0
+  device_mapping: list(range(0,16))
+  # Reference prompt log-probs use the same per-device experience micro-batch
+  # as the actor, matching ERPO.
+  infer_batch_size: 4
+  # Match actor old-logprob packing so reference scoring also avoids computing
+  # the fixed 9K padding for every response.
+  use_sequence_packing: true
+  sequence_packing_args:
+    algorithm: load_balance
+    max_packed_sequence_length_train: ${sequence_length}
+    max_packed_sequence_length_forward: ${sequence_length}
+    min_num_micro_batches_train: 1
+    min_num_micro_batches_forward: 1
+
+rewards:
+  math:
+    worker_cls: roll.pipeline.rlvr.rewards.math_rule_reward_worker.MathRuleRewardWorker
+    model_args:
+      model_name_or_path: ${reward_pretrain}
+    data_args:
+      template: native
+    tag_included: [erpo_math_train, erpo_math, erpo_aime_2024_avg4, erpo_aime_2025_avg4, erpo_amc]
+    world_size: 8
+    infer_batch_size: 1

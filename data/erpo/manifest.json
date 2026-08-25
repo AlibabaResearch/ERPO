@@ -1,0 +1,96 @@
+{
+  "source_root": "ERPO-5B0C/data",
+  "prompt_suffix": " You FIRST think about the reasoning process as an internal monologue and then provide the final answer. The reasoning process MUST BE enclosed within <think> </think> tags. The final answer MUST BE put in \\boxed{}.",
+  "files": [
+    {
+      "source": "math_lvl3to5_8k.json",
+      "destination": "train/math_lvl3to5_8k.jsonl",
+      "rows": 8523,
+      "unique_source_rows": 8523,
+      "repeats": 1,
+      "source_sha256": "6188dc809f1d2e1d17fa8e705045fb7f452816e00c6c6c4fee7b0daf71ebd155",
+      "destination_sha256": "83b2abeb69a5132444614d3ed04fb4432a0bdeef07dcce1074ac562ffe6c61a5"
+    },
+    {
+      "source": "math_eval/aime_2024.json",
+      "destination": "eval/aime_2024.jsonl",
+      "rows": 30,
+      "unique_source_rows": 30,
+      "repeats": 1,
+      "source_sha256": "e88f1c5333e15af317ce9c38f8cb18556ff1e1b26bd23062a9130a32fc1f81e9",
+      "destination_sha256": "a3404444630b0c61be2af3d4fc1a73dc564d40051da9ede270c85db2824a1339"
+    },
+    {
+      "source": "math_eval/aime_2024_avg32.json",
+      "destination": "eval/aime_2024_avg32.jsonl",
+      "rows": 960,
+      "unique_source_rows": 960,
+      "repeats": 1,
+      "source_sha256": "a192e7c3e7d5fe5cdc71426c2a55f4693505508274a16d08b30cab74c1ee8246",
+      "destination_sha256": "b4846a285cd7e7cdc6b1b2f420e515e821946408e6798a26f331f63ab93e699b"
+    },
+    {
+      "source": "math_eval/aime_2025.json",
+      "destination": "eval/aime_2025.jsonl",
+      "rows": 30,
+      "unique_source_rows": 30,
+      "repeats": 1,
+      "source_sha256": "05711e2b68e98759ca92dc702116bbac56003d0ed7ca87128f678c22f75679ad",
+      "destination_sha256": "7670f31b962eebf162978af47ba11fdd7c8a2ccb5c4f3466f2118a769a233f50"
+    },
+    {
+      "source": "math_eval/amc.json",
+      "destination": "eval/amc.jsonl",
+      "rows": 83,
+      "unique_source_rows": 83,
+      "repeats": 1,
+      "source_sha256": "cbca27ee0a35ef315ebf0c1bb15ce028dcb6e87a34cd263c515d2a4ab113d01a",
+      "destination_sha256": "810d4c8770a982c7ee0dae3137e888b95dbcb5dabce5c2c543cb8fa72d0dcdf0"
+    },
+    {
+      "source": "math_eval/math.json",
+      "destination": "eval/math.jsonl",
+      "rows": 500,
+      "unique_source_rows": 500,
+      "repeats": 1,
+      "source_sha256": "e2e0686a2d2b1637d717a18263c0ba81de8ac192d1d74c1bed438ff89aaae272",
+      "destination_sha256": "eaee58972cbb442ea6e1744d3cc9fc28418fdcb20ddc8fffa4119da7d70fd6e9"
+    },
+    {
+      "source": "math_eval/minerva.json",
+      "destination": "eval/minerva.jsonl",
+      "rows": 272,
+      "unique_source_rows": 272,
+      "repeats": 1,
+      "source_sha256": "00d0ea10da029325f6809bc35c648ea6d7712220b2fad20d1a07f4a45612ae7c",
+      "destination_sha256": "ddd3453165a3cb589193a32903b2147853b62d72dd9e6f0565b5619dd76b5065"
+    },
+    {
+      "source": "math_eval/olympiad_bench.json",
+      "destination": "eval/olympiad_bench.jsonl",
+      "rows": 675,
+      "unique_source_rows": 675,
+      "repeats": 1,
+      "source_sha256": "801e8265205b1d3c1f9646289daa18e8053d21e76cbbd6ccc8eed668194f3fbc",
+      "destination_sha256": "5b482b3ba85f5190f3bc5e5c08998dac3af28d43dc10ba75b010119de957a42a"
+    },
+    {
+      "source": "math_eval/aime_2024.json",
+      "destination": "eval/aime_2024_avg4.jsonl",
+      "rows": 120,
+      "unique_source_rows": 30,
+      "repeats": 4,
+      "source_sha256": "e88f1c5333e15af317ce9c38f8cb18556ff1e1b26bd23062a9130a32fc1f81e9",
+      "destination_sha256": "8d2e64bfa42926aa87e8e0938e52b362f02d32bec32415b0854772c5ee778b8c"
+    },
+    {
+      "source": "math_eval/aime_2025.json",
+      "destination": "eval/aime_2025_avg4.jsonl",
+      "rows": 120,
+      "unique_source_rows": 30,
+      "repeats": 4,
+      "source_sha256": "05711e2b68e98759ca92dc702116bbac56003d0ed7ca87128f678c22f75679ad",
+      "destination_sha256": "92cd7257dfa5903337b342e1bbf476f59595a112223876abb719598904af3e57"
+    }
+  ]
+}
