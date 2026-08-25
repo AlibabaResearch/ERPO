@@ -71,7 +71,7 @@ This repository contains the **ERPO incremental patch** on top of the [ROLL](htt
 
 ### 1. Integrate with ROLL
 
-You need a ROLL installation that includes the ERPO extension points (`dynamic_prompt_logp_loss_weight` field, `prepare_backward_batch` hook, `op_data_parallel_sum`). Choose one of:
+You need a [ROLL installation](https://github.com/alibaba/ROLL/) that includes the ERPO extension points (`dynamic_prompt_logp_loss_weight` field, `prepare_backward_batch` hook, `op_data_parallel_sum`). Choose one of:
 
 **Option A: Merge into a full ROLL source tree (recommended)**
 
