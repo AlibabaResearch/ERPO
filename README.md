@@ -144,3 +144,5 @@ Controlled comparison: only two flags differ; model, data, seed, rollout shape (
 ## Acknowledgement
 
 We thank the [ROLL](https://github.com/alibaba/ROLL) team for providing the efficient and scalable RL infrastructure that made this work possible.
+
+A verl-based implementation (used for the paper's main experiments) is available at [ERPO-5B0C](https://anonymous.4open.science/r/ERPO-5B0C/README.md). We also thank the [verl](https://github.com/verl-project/verl) and [EasyR1](https://github.com/hiyouga/easyr1) teams for their open-source reinforcement learning frameworks.

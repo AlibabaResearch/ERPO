@@ -144,3 +144,5 @@ python examples/start_rlvr_pipeline.py \
 ## 致谢
 
 感谢 [ROLL](https://github.com/alibaba/ROLL) 团队提供高效、可扩展的强化学习基础设施，为本工作提供了重要支持。
+
+另有一份基于 verl 的实现（论文主实验）：[ERPO-5B0C](https://anonymous.4open.science/r/ERPO-5B0C/README.md)。同时感谢 [verl](https://github.com/verl-project/verl) 与 [EasyR1](https://github.com/hiyouga/easyr1) 团队提供的开源强化学习框架。
