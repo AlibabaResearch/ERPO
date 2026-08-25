@@ -64,8 +64,6 @@ This repository contains the **ERPO incremental patch** on top of the [ROLL](htt
 | `examples/erpo/` | ERPO / GRPO controlled-comparison YAML configs (2 files) |
 | `data/erpo/` | Training & evaluation JSONL with `manifest.json` checksum manifest |
 | `assets/` | Figures used in this README (overview, results, training dynamics) |
-| `scripts/prepare_erpo_data.py` | Data generation from upstream ERPO data |
-| `tests/` | Configuration and algorithm unit tests |
 
 ## Quick Start with ROLL
 
@@ -81,7 +79,6 @@ cd ROLL
 cp -r <path-to-erpo>/roll/* roll/
 cp -r <path-to-erpo>/examples/erpo examples/
 cp -r <path-to-erpo>/data/erpo data/
-cp <path-to-erpo>/scripts/prepare_erpo_data.py scripts/
 ```
 
 **Option B: Pip install then overwrite**
@@ -92,27 +89,15 @@ python -c "import roll.pipeline.rlvr, os; print(os.path.dirname(roll.pipeline.rl
 # Overwrite actor_worker.py and rlvr_config.py under the printed path
 ```
 
-### 2. Environment Variables
+### 2. Data
 
-| Variable | Required | Description | Default |
-| --- | --- | --- | --- |
-| `SWANLAB_API_KEY` | Yes | SwanLab experiment tracking key | — |
-| `RUN_NAME` | No | Job name / experiment name | `erpo_base_qwen25_7b` |
-| `SWANLAB_LOGDIR` | No | SwanLab log directory | `./output/swanlog` |
-| `OSS_RUN_BASE` | No | Checkpoint upload OSS prefix | `./output` |
-| `RESUME_FROM_CHECKPOINT` | No | Resume from checkpoint path | `false` |
+The prepared training and evaluation data is ready to use in `data/erpo/`:
 
-### 3. Data
+- Training data: `data/erpo/train/`
+- Evaluation data: `data/erpo/eval/`
+- Checksums and metadata: `data/erpo/manifest.json`
 
-Training/evaluation data is included in `data/erpo/` (verified by `manifest.json`). To regenerate from upstream ERPO data:
-
-```bash
-python scripts/prepare_erpo_data.py \
-  --source-dir <path-to-upstream-ERPO>/data \
-  --output-dir data/erpo
-```
-
-### 4. Launch Training
+### 3. Launch Training
 
 Run from the ROLL project root:
 
@@ -148,17 +133,6 @@ Controlled comparison: only two flags differ; model, data, seed, rollout shape (
 | `dynamic_prompt_logp_loss_weight` | `true` | `false` |
 | `kl_loss_mask_mode` | `prompt` | `response` |
 | `use_kl_loss` / `kl_loss_coef` | `true` / `1.0e-2` | same |
-
-## Tests
-
-From the repository root, with ROLL installed (`import roll` available):
-
-```bash
-pytest tests/ -v
-```
-
-- `tests/test_erpo_config.py`: validates `examples/erpo/erpo_base_qwen25_7b.yaml` key fields (parallel config, batch shape, ERPO flags, tag-to-data consistency);
-- `tests/pipeline/test_erpo_prompt_weight.py`: validates the per-query weight formula and sequence-packing alignment.
 
 ## Citation
 
