@@ -14,6 +14,7 @@
 
 > [!IMPORTANT]
 > **🔥 News**
+> - [2026/09] ERPO has been selected for an **oral presentation at EMNLP 2026**!
 > - [2026/08] ERPO is accepted to **EMNLP 2026 main conference**.
 > - [2026/08] We release the full training recipe, configuration files, and evaluation data on ROLL.
 
